@@ -16,6 +16,15 @@ const initializeDb = async () => {
         const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf-8');
         await pool.query(schema);
         console.log('Database schema initialization completed.');
+
+        // Fix sequence synchronization if IDs were manually seeded
+        console.log('Resetting table sequences...');
+        await pool.query(`
+            SELECT setval(pg_get_serial_sequence('tables', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM tables;
+            SELECT setval(pg_get_serial_sequence('reservations', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM reservations;
+            SELECT setval(pg_get_serial_sequence('menu_items', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM menu_items;
+        `);
+        console.log('Sequences reset successfully.');
     } catch (err) {
         console.error('CRITICAL: Database initialization failed:', err.message);
         if (process.env.VERCEL) {
