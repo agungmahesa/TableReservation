@@ -132,10 +132,21 @@ exports.initializeDatabase = async (req, res) => {
 };
 
 exports.healthCheck = async (req, res) => {
+    let dbHost = 'none';
+    if (process.env.DATABASE_URL) {
+        try {
+            const url = new URL(process.env.DATABASE_URL);
+            dbHost = `${url.protocol}//${url.host}`;
+        } catch (e) {
+            dbHost = 'invalid format';
+        }
+    }
+
     res.json({
         status: 'UP',
         environment: {
             hasDatabaseUrl: !!process.env.DATABASE_URL,
+            databaseHost: dbHost,
             hasSupabaseUrl: !!process.env.SUPABASE_URL,
             hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
             nodeEnv: process.env.NODE_ENV,
