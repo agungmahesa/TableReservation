@@ -90,6 +90,7 @@ export default function BookingPage() {
                     reservationId: res.data.id,
                     requiresDeposit: res.data.requiresDeposit,
                     depositAmount: res.data.depositAmount,
+                    restaurantName: siteSettings.restaurant_name || 'Lumina Dining',
                     ...payload
                 }
             });
