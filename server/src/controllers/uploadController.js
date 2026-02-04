@@ -10,8 +10,11 @@ const getSupabase = () => {
             throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables');
         }
 
-        // Ensure URL has protocol
+        // Ensure URL has protocol and is NOT a database URL
         let url = process.env.SUPABASE_URL;
+        if (url.startsWith('postgresql://') || url.startsWith('postgres://')) {
+            throw new Error('SUPABASE_URL must be an HTTPS API URL (https://...), not a database connection string. Check your Vercel Environment Variables.');
+        }
         if (!url.startsWith('http')) {
             url = `https://${url}`;
         }
