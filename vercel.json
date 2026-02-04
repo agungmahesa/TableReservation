@@ -10,9 +10,6 @@
             "destination": "/server/uploads/$1"
         },
         {
-            "handle": "filesystem"
-        },
-        {
             "source": "/((?!api|uploads).*)",
             "destination": "/client/index.html"
         }
