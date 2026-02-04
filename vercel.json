@@ -10,7 +10,8 @@
             "dest": "/server/uploads/$1"
         },
         {
-            "handle": "filesystem"
+            "src": "/(assets/.*|vite.svg|favicon.ico)",
+            "dest": "/client/$1"
         },
         {
             "src": "/(.*)",
