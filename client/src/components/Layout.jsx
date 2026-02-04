@@ -29,13 +29,15 @@ export default function Layout() {
                     : 'bg-secondary text-surface shadow-md relative'
                 }
             `}>
-                <Link to="/" className="flex items-center gap-3 text-2xl font-bold tracking-tight hover:text-primary transition-colors">
+                <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
                     {settings.restaurant_logo ? (
-                        <img src={settings.restaurant_logo} alt="Logo" className="w-10 h-10 object-contain" />
+                        <img src={settings.restaurant_logo} alt="Logo" className="h-12 w-auto object-contain" />
                     ) : (
-                        <UtensilsCrossed className="w-8 h-8 text-primary" />
+                        <div className="flex items-center gap-2">
+                            <UtensilsCrossed className="w-8 h-8 text-primary" />
+                            <span className="text-2xl font-bold tracking-tight">{settings.restaurant_name || 'Lumina Dining'}</span>
+                        </div>
                     )}
-                    {settings.restaurant_name && <span>{settings.restaurant_name}</span>}
                 </Link>
                 <nav className="flex gap-6 items-center">
                     <Link to="/" className="text-sm font-medium hover:text-primary transition-colors hidden md:block">HOME</Link>
@@ -51,7 +53,7 @@ export default function Layout() {
 
             {!isHome && (
                 <footer className="bg-secondary text-surface/60 py-8 text-center text-sm">
-                    <p>&copy; {new Date().getFullYear()} {settings.restaurant_name || ''}. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} Mstudio. All rights reserved.</p>
                     <div className="mt-2 flex justify-center gap-4">
                         <Link to="/admin" className="hover:text-primary">Staff Login</Link>
                     </div>

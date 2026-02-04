@@ -209,7 +209,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="pt-16 border-t border-white/5 text-gray-500 text-xs tracking-widest uppercase">
-                        &copy; {new Date().getFullYear()} Nebular Solstice. All rights reserved.
+                        &copy; {new Date().getFullYear()} Mstudio. All rights reserved.
                     </div>
                 </div>
             </footer>

@@ -429,15 +429,17 @@ export default function AdminDashboard() {
             )}
             {/* Sidebar */}
             <aside className="w-64 bg-secondary text-white p-6 hidden md:flex flex-col border-r border-white/5 shadow-2xl z-20">
-                <div className="flex items-center gap-3 mb-10 px-2 overflow-hidden">
+                <div className="flex items-center justify-center mb-10 px-2 overflow-hidden min-h-[40px]">
                     {siteSettings.restaurant_logo ? (
-                        <img src={siteSettings.restaurant_logo} alt="Logo" className="w-8 h-8 object-contain rounded-md" />
+                        <img src={siteSettings.restaurant_logo} alt="Logo" className="h-10 w-auto object-contain rounded-md" />
                     ) : (
-                        <div className="bg-primary p-2 rounded-lg text-secondary">
-                            <LayoutGrid size={24} />
+                        <div className="flex items-center gap-2">
+                            <div className="bg-primary p-2 rounded-lg text-secondary">
+                                <LayoutGrid size={24} />
+                            </div>
+                            <h1 className="text-xl font-black tracking-tight truncate">{siteSettings.restaurant_name || 'Admin'}</h1>
                         </div>
                     )}
-                    <h1 className="text-xl font-black tracking-tight truncate">{siteSettings.restaurant_name || 'Admin Panel'}</h1>
                 </div>
 
                 <nav className="flex-1 space-y-2">
