@@ -115,6 +115,10 @@ exports.deleteMenuItem = async (req, res) => {
 };
 
 exports.initializeDatabase = async (req, res) => {
+    const secret = req.query.key;
+    if (process.env.NODE_ENV === 'production' && secret !== process.env.ADMIN_SECRET_KEY) {
+        return res.status(403).json({ error: 'Unauthorized: Missing or invalid secret key' });
+    }
     try {
         await db.initializeDb();
         res.json({
@@ -132,6 +136,10 @@ exports.initializeDatabase = async (req, res) => {
 };
 
 exports.healthCheck = async (req, res) => {
+    const secret = req.query.key;
+    if (process.env.NODE_ENV === 'production' && secret !== process.env.ADMIN_SECRET_KEY) {
+        return res.status(403).json({ error: 'Unauthorized: Maintenance mode requires secret key' });
+    }
     let dbHost = 'none';
     if (process.env.DATABASE_URL) {
         try {
