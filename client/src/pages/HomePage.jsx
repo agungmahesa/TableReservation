@@ -160,7 +160,7 @@ export default function HomePage() {
                                             {item.name}
                                         </h3>
                                         <span className="text-lg font-medium text-primary/80 font-mono">
-                                            $ {item.price.toLocaleString()}
+                                            Rp {item.price.toLocaleString()}
                                         </span>
                                     </div>
 

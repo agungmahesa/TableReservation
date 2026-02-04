@@ -9,7 +9,18 @@ const getSupabase = () => {
         if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
             throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables');
         }
-        supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+
+        // Ensure URL has protocol
+        let url = process.env.SUPABASE_URL;
+        if (!url.startsWith('http')) {
+            url = `https://${url}`;
+        }
+
+        try {
+            supabase = createClient(url, process.env.SUPABASE_ANON_KEY);
+        } catch (e) {
+            throw new Error(`Failed to initialize Supabase client: ${e.message}. URL: ${url}`);
+        }
     }
     return supabase;
 };
