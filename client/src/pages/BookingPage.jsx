@@ -104,7 +104,7 @@ export default function BookingPage() {
         <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
             <div className="text-center mb-10">
                 <h1 className="text-4xl font-extrabold text-secondary mb-2">Book Your Table</h1>
-                <p className="text-gray-500">Secure your spot at Lumina Dining in just a few clicks.</p>
+                <p className="text-gray-500">Secure your spot at {siteSettings.restaurant_name || 'Lumina Dining'} in just a few clicks.</p>
             </div>
 
             <div className="bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-100">
