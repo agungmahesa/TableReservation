@@ -1,17 +1,21 @@
 {
     "version": 2,
-    "rewrites": [
+    "routes": [
         {
-            "source": "/api/(.*)",
-            "destination": "/server/index.js"
+            "src": "/api/(.*)",
+            "dest": "server/index.js"
         },
         {
-            "source": "/uploads/(.*)",
-            "destination": "/server/uploads/$1"
+            "src": "/uploads/(.*)",
+            "dest": "server/uploads/$1"
         },
         {
-            "source": "/(.*)",
-            "destination": "/index.html"
+            "src": "/(assets/.*|vite.svg|favicon.ico)",
+            "dest": "client/$1"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "client/index.html"
         }
     ],
     "builds": [
