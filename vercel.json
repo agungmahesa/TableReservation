@@ -1,22 +1,17 @@
 {
     "version": 2,
-    "routes": [
+    "rewrites": [
         {
-            "src": "/api/(.*)",
-            "dest": "/server/index.js"
+            "source": "/api/(.*)",
+            "destination": "/server/index.js"
         },
         {
-            "src": "/uploads/(.*)",
-            "dest": "/server/uploads/$1"
+            "source": "/uploads/(.*)",
+            "destination": "/server/uploads/$1"
         },
         {
-            "src": "/(.*)",
-            "dest": "/client/$1",
-            "continue": true
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/client/index.html"
+            "source": "/(.*)",
+            "destination": "/index.html"
         }
     ],
     "builds": [
