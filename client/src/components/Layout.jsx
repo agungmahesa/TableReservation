@@ -7,6 +7,7 @@ export default function Layout() {
     const location = useLocation();
     const isHome = location.pathname === '/';
     const [settings, setSettings] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -15,10 +16,14 @@ export default function Layout() {
                 setSettings(res.data);
             } catch (err) {
                 console.error('Failed to fetch settings in Layout', err);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchSettings();
     }, []);
+
+    if (isLoading) return null; // Prevent flicker during initial load
 
     return (
         <div className={`font-sans flex flex-col ${isHome ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
@@ -35,7 +40,9 @@ export default function Layout() {
                     ) : (
                         <div className="flex items-center gap-2">
                             <UtensilsCrossed className="w-8 h-8 text-primary" />
-                            <span className="text-2xl font-bold tracking-tight">{settings.restaurant_name || 'Lumina Dining'}</span>
+                            {settings.restaurant_name && (
+                                <span className="text-2xl font-bold tracking-tight">{settings.restaurant_name}</span>
+                            )}
                         </div>
                     )}
                 </Link>

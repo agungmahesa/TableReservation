@@ -65,20 +65,56 @@ exports.checkAvailability = async (req, res) => {
         }
 
         const tablesResult = await db.query(tableQuery, tableParams);
-        const tables = tablesResult.rows;
+        const allSuitableTables = tablesResult.rows;
 
-        // Get reservations for the date
-        const resListResult = await db.query('SELECT * FROM reservations WHERE date = $1 AND status != $2', [date, 'Cancelled']);
-        const reservations = resListResult.rows;
+        // Get ALL reservation assignments for this date in ONE query
+        const allAssignmentsResult = await db.query(`
+            SELECT ra.table_id, r.time_slot
+            FROM reservation_assignments ra
+            JOIN reservations r ON ra.reservation_id = r.id
+            WHERE r.date = $1 AND r.status != $2
+        `, [date, 'Cancelled']);
+
+        // Group reserved tables by time slot for fast lookup
+        const assignmentsBySlot = {};
+        for (const row of allAssignmentsResult.rows) {
+            if (!assignmentsBySlot[row.time_slot]) {
+                assignmentsBySlot[row.time_slot] = new Set();
+            }
+            assignmentsBySlot[row.time_slot].add(row.table_id);
+        }
 
         const slotsStatus = [];
         for (const slot of timeSlots) {
-            // Use smart assignment to check if this slot can accommodate the guests
-            const assignedTables = await findBestTableAssignment(guests, date, slot, location);
+            // Check availability in-memory using the data we already fetched
+            const reservedTableIds = assignmentsBySlot[slot] || new Set();
+            const availableTables = allSuitableTables.filter(t => !reservedTableIds.has(t.id));
+
+            let isAvailable = false;
+
+            // STRATEGY 1: Best-Fit Single Table
+            const fitSingle = availableTables.find(t => t.capacity >= guests);
+            if (fitSingle) {
+                isAvailable = true;
+            } else {
+                // STRATEGY 2: Table Joining
+                const joinableTables = availableTables
+                    .filter(t => t.is_joinable === 1)
+                    .sort((a, b) => b.capacity - a.capacity);
+
+                let totalCap = 0;
+                for (const t of joinableTables) {
+                    totalCap += t.capacity;
+                    if (totalCap >= guests) {
+                        isAvailable = true;
+                        break;
+                    }
+                }
+            }
 
             slotsStatus.push({
                 time: slot,
-                available: assignedTables !== null && assignedTables.length > 0
+                available: isAvailable
             });
         }
 
