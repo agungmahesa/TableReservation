@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:9mb8Lpb63CC.YU5@db.esrewpptsieedcthmwzq.supabase.co:5432/postgres',
+    connectionString: process.env.DATABASE_URL,
 });
 
 const initializeDb = async () => {
