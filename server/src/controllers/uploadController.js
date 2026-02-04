@@ -77,8 +77,15 @@ exports.uploadImage = (req, res) => {
 
             res.json({ url: publicUrl });
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Failed to upload to Supabase Storage: ' + error.message });
+            console.error('Storage Upload Error Detail:', {
+                message: error.message,
+                stack: error.stack,
+                cause: error.cause
+            });
+            res.status(500).json({
+                error: 'Failed to upload to Supabase Storage: ' + error.message,
+                details: error.cause ? error.cause.message : 'No cause details'
+            });
         }
     });
 };

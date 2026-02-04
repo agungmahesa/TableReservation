@@ -26,6 +26,7 @@ export default function AdminDashboard() {
 
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [uploadingAboutImage, setUploadingAboutImage] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef(null);
     const logoInputRef = useRef(null);
     const aboutInputRef = useRef(null);
@@ -256,17 +257,25 @@ export default function AdminDashboard() {
         formData.append('image', file);
 
         setUploading(true);
+        setUploadProgress(0);
         try {
             const res = await axios.post('/api/admin/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadProgress(progress);
+                }
             });
             setSiteSettings({ ...siteSettings, hero_image: res.url || res.data.url });
             alert('Image uploaded! Remember to click "Update Configuration" to save changes.');
         } catch (err) {
             console.error(err);
-            alert('Upload failed: ' + (err.response?.data?.error || err.message));
+            const errorMsg = err.response?.data?.error || err.message;
+            const detailMsg = err.response?.data?.details ? ` (${err.response.data.details})` : '';
+            alert('Upload failed: ' + errorMsg + detailMsg);
         } finally {
             setUploading(false);
+            setTimeout(() => setUploadProgress(0), 1000);
         }
     };
 
@@ -278,17 +287,25 @@ export default function AdminDashboard() {
         formData.append('image', file);
 
         setUploadingLogo(true);
+        setUploadProgress(0);
         try {
             const res = await axios.post('/api/admin/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadProgress(progress);
+                }
             });
             setSiteSettings({ ...siteSettings, restaurant_logo: res.url || res.data.url });
             alert('Logo uploaded! Remember to click "Update Configuration" to save changes.');
         } catch (err) {
             console.error(err);
-            alert('Upload failed: ' + (err.response?.data?.error || err.message));
+            const errorMsg = err.response?.data?.error || err.message;
+            const detailMsg = err.response?.data?.details ? ` (${err.response.data.details})` : '';
+            alert('Upload failed: ' + errorMsg + detailMsg);
         } finally {
             setUploadingLogo(false);
+            setTimeout(() => setUploadProgress(0), 1000);
         }
     };
 
@@ -300,17 +317,25 @@ export default function AdminDashboard() {
         formData.append('image', file);
 
         setUploadingAboutImage(true);
+        setUploadProgress(0);
         try {
             const res = await axios.post('/api/admin/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadProgress(progress);
+                }
             });
             setSiteSettings({ ...siteSettings, about_image: res.url || res.data.url });
             alert('About Image uploaded! Remember to click "Update CMS Content" to save changes.');
         } catch (err) {
             console.error(err);
-            alert('Upload failed: ' + (err.response?.data?.error || err.message));
+            const errorMsg = err.response?.data?.error || err.message;
+            const detailMsg = err.response?.data?.details ? ` (${err.response.data.details})` : '';
+            alert('Upload failed: ' + errorMsg + detailMsg);
         } finally {
             setUploadingAboutImage(false);
+            setTimeout(() => setUploadProgress(0), 1000);
         }
     };
 
@@ -323,17 +348,25 @@ export default function AdminDashboard() {
         formData.append('image', file);
 
         setUploadingMenuImage(true);
+        setUploadProgress(0);
         try {
             const res = await axios.post('/api/admin/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadProgress(progress);
+                }
             });
             const imageUrl = res.data.url || res.url;
             setMenuForm(prev => ({ ...prev, image_url: imageUrl }));
         } catch (err) {
             console.error(err);
-            alert('Upload failed: ' + (err.response?.data?.error || err.message));
+            const errorMsg = err.response?.data?.error || err.message;
+            const detailMsg = err.response?.data?.details ? ` (${err.response.data.details})` : '';
+            alert('Upload failed: ' + errorMsg + detailMsg);
         } finally {
             setUploadingMenuImage(false);
+            setTimeout(() => setUploadProgress(0), 1000);
         }
     };
 
@@ -381,7 +414,19 @@ export default function AdminDashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex text-secondary font-sans">
+        <div className="min-h-screen bg-gray-50 flex text-secondary font-sans relative">
+            {/* Global upload progress bar */}
+            {(uploadProgress > 0) && (
+                <div className="fixed top-0 left-0 right-0 z-[100] h-1.5 bg-gray-100 overflow-hidden">
+                    <div
+                        className="h-full bg-primary transition-all duration-300 ease-out"
+                        style={{ width: `${uploadProgress}%` }}
+                    />
+                    <div className="fixed top-4 right-8 bg-black/80 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md animate-pulse">
+                        Uploading {uploadProgress}%
+                    </div>
+                </div>
+            )}
             {/* Sidebar */}
             <aside className="w-64 bg-secondary text-white p-6 hidden md:flex flex-col border-r border-white/5 shadow-2xl z-20">
                 <div className="flex items-center gap-3 mb-10 px-2">

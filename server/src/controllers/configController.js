@@ -148,6 +148,7 @@ exports.healthCheck = async (req, res) => {
             hasDatabaseUrl: !!process.env.DATABASE_URL,
             databaseHost: dbHost,
             hasSupabaseUrl: !!process.env.SUPABASE_URL,
+            supabaseUrl: process.env.SUPABASE_URL ? (process.env.SUPABASE_URL.substring(0, 15) + '...') : 'none',
             hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
             nodeEnv: process.env.NODE_ENV,
             isVercel: !!process.env.VERCEL
