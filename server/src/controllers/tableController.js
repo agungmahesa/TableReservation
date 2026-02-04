@@ -5,8 +5,8 @@ exports.getAllTables = async (req, res) => {
         const result = await db.query('SELECT * FROM tables');
         res.json(result.rows);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Get All Tables Error:', error);
+        res.status(500).json({ error: 'Failed to fetch tables: ' + error.message });
     }
 };
 
@@ -20,8 +20,8 @@ exports.addTable = async (req, res) => {
         );
         res.status(201).json({ id: result.rows[0].id, message: 'Table added' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Add Table Error:', error);
+        res.status(500).json({ error: 'Failed to save table: ' + error.message });
     }
 };
 
