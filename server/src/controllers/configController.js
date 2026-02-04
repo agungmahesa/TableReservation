@@ -1,10 +1,10 @@
 const db = require('../db');
 
-exports.getSettings = (req, res) => {
+exports.getSettings = async (req, res) => {
     try {
-        const rows = db.prepare('SELECT * FROM settings').all();
+        const result = await db.query('SELECT * FROM settings');
         const settings = {};
-        rows.forEach(row => {
+        result.rows.forEach(row => {
             try {
                 settings[row.key] = JSON.parse(row.value);
             } catch {
@@ -13,88 +13,103 @@ exports.getSettings = (req, res) => {
         });
         res.json(settings);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to fetch settings' });
     }
 };
 
-exports.updateSettings = (req, res) => {
+exports.updateSettings = async (req, res) => {
     try {
         const updates = req.body;
-        const stmt = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
-        const transaction = db.transaction((data) => {
-            for (const [key, value] of Object.entries(data)) {
-                const valStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
-                stmt.run(key, valStr);
-            }
-        });
-        transaction(updates);
+        // In PG, we can use a single multi-row insert with ON CONFLICT
+        // But for simplicity and maintaining the existing logic loop:
+        await db.query('BEGIN');
+        for (const [key, value] of Object.entries(updates)) {
+            const valStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
+            await db.query(
+                'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP',
+                [key, valStr]
+            );
+        }
+        await db.query('COMMIT');
         res.json({ message: 'Settings updated successfully' });
     } catch (error) {
+        await db.query('ROLLBACK');
+        console.error(error);
         res.status(500).json({ error: 'Failed to update settings' });
     }
 };
 
-exports.getMenu = (req, res) => {
+exports.getMenu = async (req, res) => {
     try {
-        const menu = db.prepare('SELECT * FROM menu_items WHERE is_active = 1').all();
-        res.json(menu);
+        const result = await db.query('SELECT * FROM menu_items WHERE is_active = 1');
+        res.json(result.rows);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to fetch menu' });
     }
 };
 
-exports.getAllMenuAdmin = (req, res) => {
+exports.getAllMenuAdmin = async (req, res) => {
     try {
-        const menu = db.prepare('SELECT * FROM menu_items').all();
-        res.json(menu);
+        const result = await db.query('SELECT * FROM menu_items');
+        res.json(result.rows);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to fetch menu' });
     }
 };
 
-exports.addMenuItem = (req, res) => {
+exports.addMenuItem = async (req, res) => {
     try {
         const { name, description, image_url, price, category } = req.body;
 
         // Check for duplicate name
-        const existing = db.prepare('SELECT id FROM menu_items WHERE LOWER(name) = LOWER(?)').get(name);
-        if (existing) {
+        const existing = await db.query('SELECT id FROM menu_items WHERE LOWER(name) = LOWER($1)', [name]);
+        if (existing.rows.length > 0) {
             return res.status(400).json({ error: 'A menu item with this name already exists' });
         }
 
-        const stmt = db.prepare('INSERT INTO menu_items (name, description, image_url, price, category) VALUES (?, ?, ?, ?, ?)');
-        const info = stmt.run(name, description, image_url, price, category);
-        res.status(201).json({ id: info.lastInsertRowid, message: 'Menu item added' });
+        const result = await db.query(
+            'INSERT INTO menu_items (name, description, image_url, price, category) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+            [name, description, image_url, price, category]
+        );
+        res.status(201).json({ id: result.rows[0].id, message: 'Menu item added' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to add menu item' });
     }
 };
 
-exports.updateMenuItem = (req, res) => {
+exports.updateMenuItem = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, description, image_url, price, category, is_active } = req.body;
 
         // Check for duplicate name (excluding current item)
-        const existing = db.prepare('SELECT id FROM menu_items WHERE LOWER(name) = LOWER(?) AND id != ?').get(name, id);
-        if (existing) {
+        const existing = await db.query('SELECT id FROM menu_items WHERE LOWER(name) = LOWER($1) AND id != $2', [name, id]);
+        if (existing.rows.length > 0) {
             return res.status(400).json({ error: 'A menu item with this name already exists' });
         }
 
-        const stmt = db.prepare('UPDATE menu_items SET name = ?, description = ?, image_url = ?, price = ?, category = ?, is_active = ? WHERE id = ?');
-        stmt.run(name, description, image_url, price, category, is_active ? 1 : 0, id);
+        await db.query(
+            'UPDATE menu_items SET name = $1, description = $2, image_url = $3, price = $4, category = $5, is_active = $6 WHERE id = $7',
+            [name, description, image_url, price, category, is_active ? 1 : 0, id]
+        );
         res.json({ message: 'Menu item updated' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to update menu item' });
     }
 };
 
-exports.deleteMenuItem = (req, res) => {
+exports.deleteMenuItem = async (req, res) => {
     try {
         const { id } = req.params;
-        db.prepare('DELETE FROM menu_items WHERE id = ?').run(id);
+        await db.query('DELETE FROM menu_items WHERE id = $1', [id]);
         res.json({ message: 'Menu item deleted' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to delete menu item' });
     }
 };

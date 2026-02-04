@@ -29,6 +29,12 @@ app.get('/api/health', (req, res) => {
 const apiRoutes = require('./src/routes/api');
 app.use('/api', apiRoutes);
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+// Initialize DB and start server
+db.initializeDb().then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+}).catch(err => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
 });

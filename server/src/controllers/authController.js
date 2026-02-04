@@ -1,17 +1,19 @@
 const db = require('../db');
 
-exports.login = (req, res) => {
-    const { username, password } = req.body;
-    // Generic admin login for MVP since I didn't seed users explicitly with hashed passwords yet.
-    // But let's check DB.
+exports.login = async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        // For simplicity in this demo:
+        if (username === 'admin' && password === 'admin123') {
+            return res.json({ token: 'mock-token-123', role: 'Admin' });
+        }
+        if (username === 'staff' && password === 'staff123') {
+            return res.json({ token: 'mock-token-staff-123', role: 'Staff' });
+        }
 
-    // For simplicity in this demo:
-    if (username === 'admin' && password === 'admin123') {
-        return res.json({ token: 'mock-token-123', role: 'Admin' });
+        return res.status(401).json({ error: 'Invalid credentials' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal server error' });
     }
-    if (username === 'staff' && password === 'staff123') {
-        return res.json({ token: 'mock-token-staff-123', role: 'Staff' });
-    }
-
-    return res.status(401).json({ error: 'Invalid credentials' });
 };

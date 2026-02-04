@@ -14,7 +14,7 @@ const reservationSchema = z.object({
     seating_preference: z.enum(['Indoor', 'Outdoor']).optional(),
 });
 
-exports.checkAvailability = (req, res) => {
+exports.checkAvailability = async (req, res) => {
     try {
         const { date, guests, location } = req.query;
 
@@ -23,12 +23,13 @@ exports.checkAvailability = (req, res) => {
         }
 
         // Get restaurant hours from settings
-        const hoursRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('restaurant_hours');
+        const hoursResult = await db.query('SELECT value FROM settings WHERE key = $1', ['restaurant_hours']);
+        const hoursRow = hoursResult.rows[0];
         let timeSlots = config.TIME_SLOTS; // Fallback to default
 
         if (hoursRow) {
             try {
-                const hours = JSON.parse(hoursRow.value);
+                const hours = typeof hoursRow.value === 'string' ? JSON.parse(hoursRow.value) : hoursRow.value;
                 if (hours.open && hours.close) {
                     // Generate time slots from open to close with configured interval
                     timeSlots = [];
@@ -39,17 +40,11 @@ exports.checkAvailability = (req, res) => {
                     let currentHour = openHour;
                     let currentMin = openMin;
 
-                    // Loop until current time exceeds close time
-                    // The condition needs to be carefully constructed to include the last slot if it aligns with close time
                     while (currentHour < closeHour || (currentHour === closeHour && currentMin <= closeMin)) {
                         const timeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}`;
-
-                        // Only add the slot if it's not past the closing time
                         if (currentHour < closeHour || (currentHour === closeHour && currentMin <= closeMin)) {
                             timeSlots.push(timeStr);
                         }
-
-                        // Increment by configured interval
                         currentMin += interval;
                         currentHour += Math.floor(currentMin / 60);
                         currentMin = currentMin % 60;
@@ -61,28 +56,31 @@ exports.checkAvailability = (req, res) => {
         }
 
         // Base query for tables
-        let tableQuery = 'SELECT * FROM tables WHERE capacity >= ? AND status != ?';
+        let tableQuery = 'SELECT * FROM tables WHERE capacity >= $1 AND status != $2';
         const tableParams = [guests, 'Blocked'];
 
         if (location) {
-            tableQuery += ' AND location = ?';
+            tableQuery += ' AND location = $3';
             tableParams.push(location);
         }
 
-        const tables = db.prepare(tableQuery).all(...tableParams);
+        const tablesResult = await db.query(tableQuery, tableParams);
+        const tables = tablesResult.rows;
 
         // Get reservations for the date
-        const reservations = db.prepare('SELECT * FROM reservations WHERE date = ? AND status != ?').all(date, 'Cancelled');
+        const resListResult = await db.query('SELECT * FROM reservations WHERE date = $1 AND status != $2', [date, 'Cancelled']);
+        const reservations = resListResult.rows;
 
-        const slotsStatus = timeSlots.map(slot => {
+        const slotsStatus = [];
+        for (const slot of timeSlots) {
             // Use smart assignment to check if this slot can accommodate the guests
-            const assignedTables = findBestTableAssignment(guests, date, slot, location);
+            const assignedTables = await findBestTableAssignment(guests, date, slot, location);
 
-            return {
+            slotsStatus.push({
                 time: slot,
                 available: assignedTables !== null && assignedTables.length > 0
-            };
-        });
+            });
+        }
 
         res.json({ slots: slotsStatus });
 
@@ -101,25 +99,27 @@ exports.checkAvailability = (req, res) => {
  * @param {string} location - Preferred location (Indoor/Outdoor)
  * @returns {Array|null} - Array of table IDs or null if no solution found
  */
-function findBestTableAssignment(guestCount, date, timeSlot, location = null) {
+async function findBestTableAssignment(guestCount, date, timeSlot, location = null) {
     // Get all tables matching location preference
-    let tableQuery = 'SELECT * FROM tables WHERE status != ?';
+    let tableQuery = 'SELECT * FROM tables WHERE status != $1';
     const tableParams = ['Blocked'];
 
     if (location) {
-        tableQuery += ' AND location = ?';
+        tableQuery += ' AND location = $2';
         tableParams.push(location);
     }
 
-    const allTables = db.prepare(tableQuery).all(...tableParams);
+    const allTablesResult = await db.query(tableQuery, tableParams);
+    const allTables = allTablesResult.rows;
 
     // Get reserved table IDs for this slot from reservation_assignments
-    const reservedTableIds = db.prepare(`
+    const reservedTablesResult = await db.query(`
         SELECT DISTINCT ra.table_id 
         FROM reservation_assignments ra
         JOIN reservations r ON ra.reservation_id = r.id
-        WHERE r.date = ? AND r.time_slot = ? AND r.status != ?
-    `).all(date, timeSlot, 'Cancelled').map(row => row.table_id);
+        WHERE r.date = $1 AND r.time_slot = $2 AND r.status != $3
+    `, [date, timeSlot, 'Cancelled']);
+    const reservedTableIds = reservedTablesResult.rows.map(row => row.table_id);
 
     // Filter available tables
     const availableTables = allTables.filter(t => !reservedTableIds.includes(t.id));
@@ -171,7 +171,7 @@ function findBestTableAssignment(guestCount, date, timeSlot, location = null) {
     return null;
 }
 
-exports.createReservation = (req, res) => {
+exports.createReservation = async (req, res) => {
     try {
         const data = reservationSchema.parse(req.body);
         const {
@@ -181,7 +181,7 @@ exports.createReservation = (req, res) => {
         } = data;
 
         // Use smart table assignment algorithm
-        const assignedTableIds = findBestTableAssignment(
+        const assignedTableIds = await findBestTableAssignment(
             guest_count,
             date,
             time_slot,
@@ -195,13 +195,14 @@ exports.createReservation = (req, res) => {
         }
 
         // Check for deposit requirement from dynamic settings
-        const settingsRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('deposit_config');
+        const settingsResult = await db.query('SELECT value FROM settings WHERE key = $1', ['deposit_config']);
+        const settingsRow = settingsResult.rows[0];
         let depositThreshold = 5;
         let depositAmount = 50000;
 
         if (settingsRow) {
             try {
-                const config = JSON.parse(settingsRow.value);
+                const config = typeof settingsRow.value === 'string' ? JSON.parse(settingsRow.value) : settingsRow.value;
                 depositThreshold = config.threshold || 5;
                 depositAmount = config.amount || 50000;
             } catch (e) {
@@ -213,27 +214,25 @@ exports.createReservation = (req, res) => {
         const depositRequired = guest_count >= depositThreshold;
 
         // Create Reservation (use first table as primary for backward compatibility)
-        const stmt = db.prepare(`
+        const resResult = await db.query(`
       INSERT INTO reservations (
         table_id, customer_name, customer_email, customer_phone, 
         date, time_slot, guest_count, special_requests, seating_preference, status, deposit_required
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-        const info = stmt.run(
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING id
+    `, [
             assignedTableIds[0], customer_name, customer_email, customer_phone,
             date, time_slot, guest_count, special_requests || '', seating_preference || null, initialStatus, depositRequired ? 1 : 0
-        );
+        ]);
 
-        const reservationId = info.lastInsertRowid;
+        const reservationId = resResult.rows[0].id;
 
         // Insert all assigned tables into reservation_assignments
-        const assignmentStmt = db.prepare(`
-            INSERT INTO reservation_assignments (reservation_id, table_id) VALUES (?, ?)
-        `);
-
         for (const tableId of assignedTableIds) {
-            assignmentStmt.run(reservationId, tableId);
+            await db.query(
+                'INSERT INTO reservation_assignments (reservation_id, table_id) VALUES ($1, $2)',
+                [reservationId, tableId]
+            );
         }
 
         // Placeholder for Email/SMS
@@ -257,37 +256,39 @@ exports.createReservation = (req, res) => {
     }
 };
 
-exports.getReservation = (req, res) => {
+exports.getReservation = async (req, res) => {
     try {
-        const reservation = db.prepare(`
+        const result = await db.query(`
       SELECT r.*, t.name as table_name, t.location 
       FROM reservations r
       JOIN tables t ON r.table_id = t.id
-      WHERE r.id = ?
-    `).get(req.params.id);
+      WHERE r.id = $1
+    `, [req.params.id]);
 
+        const reservation = result.rows[0];
         if (!reservation) {
             return res.status(404).json({ error: 'Reservation not found' });
         }
 
         // Get all assigned tables
-        const assignedTables = db.prepare(`
+        const tablesResult = await db.query(`
             SELECT t.id, t.name, t.capacity
             FROM reservation_assignments ra
             JOIN tables t ON ra.table_id = t.id
-            WHERE ra.reservation_id = ?
-        `).all(req.params.id);
+            WHERE ra.reservation_id = $1
+        `, [req.params.id]);
 
-        reservation.assigned_tables = assignedTables;
-        reservation.table_names = assignedTables.map(t => t.name).join(' + ');
+        reservation.assigned_tables = tablesResult.rows;
+        reservation.table_names = tablesResult.rows.map(t => t.name).join(' + ');
 
         res.json(reservation);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
 
-exports.getAllReservations = (req, res) => {
+exports.getAllReservations = async (req, res) => {
     try {
         const { date } = req.query;
         let query = `
@@ -298,57 +299,59 @@ exports.getAllReservations = (req, res) => {
         const params = [];
 
         if (date) {
-            query += ` WHERE r.date = ?`;
+            query += ` WHERE r.date = $1`;
             params.push(date);
         }
 
         query += ` ORDER BY r.date, r.time_slot`;
 
-        const reservations = db.prepare(query).all(...params);
+        const result = await db.query(query, params);
+        const reservations = result.rows;
 
         // Enrich each reservation with all assigned tables
-        const enrichedReservations = reservations.map(reservation => {
-            const assignedTables = db.prepare(`
+        const enrichedReservations = [];
+        for (const reservation of reservations) {
+            const tablesResult = await db.query(`
                 SELECT t.id, t.name, t.capacity
                 FROM reservation_assignments ra
                 JOIN tables t ON ra.table_id = t.id
-                WHERE ra.reservation_id = ?
-            `).all(reservation.id);
+                WHERE ra.reservation_id = $1
+            `, [reservation.id]);
 
-            return {
+            enrichedReservations.push({
                 ...reservation,
-                assigned_tables: assignedTables,
-                table_names: assignedTables.map(t => t.name).join(' + ')
-            };
-        });
+                assigned_tables: tablesResult.rows,
+                table_names: tablesResult.rows.map(t => t.name).join(' + ')
+            });
+        }
 
         res.json(enrichedReservations);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
 
-exports.updateReservationStatus = (req, res) => {
+exports.updateReservationStatus = async (req, res) => {
     try {
         const { status } = req.body; // Confirmed, Cancelled, Completed, Pending Payment
-        const stmt = db.prepare('UPDATE reservations SET status = ? WHERE id = ?');
-        const info = stmt.run(status, req.params.id);
+        const result = await db.query('UPDATE reservations SET status = $1 WHERE id = $2', [status, req.params.id]);
 
-        if (info.changes === 0) return res.status(404).json({ error: 'Reservation not found' });
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Reservation not found' });
 
         res.json({ message: 'Reservation status updated' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
 
-exports.updateDepositStatus = (req, res) => {
+exports.updateDepositStatus = async (req, res) => {
     try {
         const { deposit_paid } = req.body;
-        const stmt = db.prepare('UPDATE reservations SET deposit_paid = ? WHERE id = ?');
-        const info = stmt.run(deposit_paid ? 1 : 0, req.params.id);
+        const result = await db.query('UPDATE reservations SET deposit_paid = $1 WHERE id = $2', [deposit_paid ? 1 : 0, req.params.id]);
 
-        if (info.changes === 0) return res.status(404).json({ error: 'Reservation not found' });
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Reservation not found' });
 
         res.json({ message: 'Deposit status updated successfully' });
     } catch (error) {
@@ -357,7 +360,7 @@ exports.updateDepositStatus = (req, res) => {
     }
 };
 
-exports.updateReservation = (req, res) => {
+exports.updateReservation = async (req, res) => {
     try {
         const {
             customer_name, customer_email, customer_phone,
@@ -365,21 +368,19 @@ exports.updateReservation = (req, res) => {
             status, table_id
         } = req.body;
 
-        const stmt = db.prepare(`
+        const result = await db.query(`
             UPDATE reservations SET 
-                customer_name = ?, customer_email = ?, customer_phone = ?,
-                date = ?, time_slot = ?, guest_count = ?, special_requests = ?,
-                status = ?, table_id = ?
-            WHERE id = ?
-        `);
-
-        const info = stmt.run(
+                customer_name = $1, customer_email = $2, customer_phone = $3,
+                date = $4, time_slot = $5, guest_count = $6, special_requests = $7,
+                status = $8, table_id = $9
+            WHERE id = $10
+        `, [
             customer_name, customer_email, customer_phone,
             date, time_slot, guest_count, special_requests || '',
             status, table_id, req.params.id
-        );
+        ]);
 
-        if (info.changes === 0) return res.status(404).json({ error: 'Reservation not found' });
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Reservation not found' });
         res.json({ message: 'Reservation updated successfully' });
     } catch (error) {
         console.error(error);
@@ -387,11 +388,10 @@ exports.updateReservation = (req, res) => {
     }
 };
 
-exports.deleteReservation = (req, res) => {
+exports.deleteReservation = async (req, res) => {
     try {
-        const stmt = db.prepare('DELETE FROM reservations WHERE id = ?');
-        const info = stmt.run(req.params.id);
-        if (info.changes === 0) return res.status(404).json({ error: 'Reservation not found' });
+        const result = await db.query('DELETE FROM reservations WHERE id = $1', [req.params.id]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Reservation not found' });
         res.json({ message: 'Reservation deleted successfully' });
     } catch (error) {
         console.error(error);
