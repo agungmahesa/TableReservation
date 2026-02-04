@@ -74,17 +74,19 @@ export default function HomePage() {
             <section className="relative h-screen flex items-center justify-center text-center px-4 overflow-hidden snap-start shrink-0">
                 <div
                     className="absolute inset-0 bg-cover bg-center transition-all duration-1000 scale-105"
-                    style={{ backgroundImage: `url(${settings.hero_image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2070&auto=format&fit=crop'})` }}
+                    style={{ backgroundImage: `url(${settings.hero_image || ''})` }}
                 >
                     <div className="absolute inset-0 bg-black/50"></div>
                 </div>
                 <div className="relative z-10 max-w-4xl space-y-6">
-                    <h2 className="text-[#E0E0E0] text-lg md:text-xl uppercase tracking-[0.3em] font-medium animate-fade-in-up">
-                        {settings.hero_subtitle || 'Welcome to Nebular Solstice'}
-                    </h2>
+                    {settings.hero_subtitle && (
+                        <h2 className="text-[#E0E0E0] text-lg md:text-xl uppercase tracking-[0.3em] font-medium animate-fade-in-up">
+                            {settings.hero_subtitle}
+                        </h2>
+                    )}
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-[#E0E0E0] tracking-tight leading-tight">
-                        {settings.hero_title || 'Taste the'}<br />
-                        <span className="text-primary italic">{settings.hero_highlight || 'Extraordinary'}</span>
+                        {settings.hero_title || ''}<br />
+                        <span className="text-primary italic">{settings.hero_highlight || ''}</span>
                     </h1>
                     <Link
                         to="/book"
@@ -99,12 +101,16 @@ export default function HomePage() {
             <section className="h-screen flex items-center justify-center px-6 md:px-12 bg-black text-surface relative snap-start shrink-0">
                 <div className={`max-w-7xl mx-auto ${settings.about_image ? 'grid md:grid-cols-2 gap-16 text-left' : 'flex flex-col text-center max-w-3xl'} items-center transition-all duration-500`}>
                     <div className={`space-y-8 ${settings.about_image ? 'order-2 md:order-1' : ''}`}>
-                        <h2 className="text-4xl md:text-5xl font-serif text-primary">
-                            {settings.about_title || 'Where Flavor Meets Elegance'}
-                        </h2>
-                        <p className="text-[#E0E0E0] text-lg leading-relaxed font-light">
-                            {settings.about_content || 'Nestled in the heart of the city, we bring you a culinary experience that transcends the ordinary. Our chefs meticulously craft each dish to tell a story of tradition and innovation.'}
-                        </p>
+                        {settings.about_title && (
+                            <h2 className="text-4xl md:text-5xl font-serif text-primary">
+                                {settings.about_title}
+                            </h2>
+                        )}
+                        {settings.about_content && (
+                            <p className="text-[#E0E0E0] text-lg leading-relaxed font-light">
+                                {settings.about_content}
+                            </p>
+                        )}
                         <div className={`w-24 h-1 bg-primary/20 ${settings.about_image ? '' : 'mx-auto'}`}></div>
                     </div>
                     {settings.about_image && (
@@ -184,15 +190,17 @@ export default function HomePage() {
                             <MapPin size={16} /> Visit Us
                         </span>
                         <h2 className="text-4xl md:text-5xl font-serif text-white">Find Your Way</h2>
-                        <p className="text-gray-400 text-lg leading-relaxed font-light whitespace-pre-line">
-                            {settings.location_address || '123 Culinary Avenue\nFood District, FD 90210'}
-                        </p>
+                        {settings.location_address && (
+                            <p className="text-gray-400 text-lg leading-relaxed font-light whitespace-pre-line">
+                                {settings.location_address}
+                            </p>
+                        )}
                     </div>
 
                     <div>
                         <a
-                            href={settings.location_map_url || "https://maps.google.com"}
-                            target="_blank"
+                            href={settings.location_map_url || "#"}
+                            target={settings.location_map_url ? "_blank" : "_self"}
                             rel="noopener noreferrer"
                             className="inline-block border border-primary text-primary px-10 py-4 rounded-full hover:bg-primary hover:text-black transition-all font-serif font-bold uppercase tracking-widest text-sm transform hover:scale-105 backdrop-blur-sm"
                         >
