@@ -7,13 +7,23 @@ const pool = new Pool({
 });
 
 const initializeDb = async () => {
-    const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf-8');
+    console.log('Verifying database connection...');
     try {
+        // Test connection
+        await pool.query('SELECT NOW()');
+        console.log('Database connection verified.');
+
+        const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf-8');
         await pool.query(schema);
-        console.log('Database initialized successfully');
+        console.log('Database schema initialization completed.');
     } catch (err) {
-        console.error('Database initialization failed:', err);
-        // Don't exit process here in dev, some errors might be "already exists" if schema.sql isn't fully idempotent
+        console.error('CRITICAL: Database initialization failed:', err.message);
+        if (process.env.VERCEL) {
+            // Rethrow in production to make it visible in logs/crashes if preferred, 
+            // but for now we log with detail.
+            console.error('Ensure DATABASE_URL is correct in Vercel settings.');
+        }
+        throw err; // Rethrow to be caught by the caller
     }
 };
 
