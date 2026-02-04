@@ -3,19 +3,23 @@
     "routes": [
         {
             "src": "/api/(.*)",
-            "dest": "server/index.js"
+            "dest": "/server/index.js"
         },
         {
             "src": "/uploads/(.*)",
-            "dest": "server/uploads/$1"
+            "dest": "/server/uploads/$1"
         },
         {
-            "src": "/(assets/.*|vite.svg|favicon.ico)",
-            "dest": "client/$1"
+            "src": "/assets/(.*)",
+            "dest": "/client/assets/$1"
+        },
+        {
+            "src": "/vite.svg",
+            "dest": "/client/vite.svg"
         },
         {
             "src": "/(.*)",
-            "dest": "client/index.html"
+            "dest": "/client/index.html"
         }
     ],
     "builds": [
