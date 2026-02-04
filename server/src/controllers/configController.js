@@ -113,3 +113,13 @@ exports.deleteMenuItem = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete menu item' });
     }
 };
+
+exports.initializeDatabase = async (req, res) => {
+    try {
+        await db.initializeDb();
+        res.json({ message: 'Database initialization triggered successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Database initialization failed: ' + error.message });
+    }
+};

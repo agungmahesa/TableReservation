@@ -29,6 +29,7 @@ router.delete('/admin/tables/:id', tableController.deleteTable);
 
 router.post('/admin/settings', configController.updateSettings);
 router.post('/admin/upload', uploadController.uploadImage);
+router.get('/admin/db-init', configController.initializeDatabase);
 router.get('/admin/menu', configController.getAllMenuAdmin);
 router.post('/admin/menu', configController.addMenuItem);
 router.patch('/admin/menu/:id', configController.updateMenuItem);
