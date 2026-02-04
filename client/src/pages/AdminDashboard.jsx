@@ -66,7 +66,7 @@ export default function AdminDashboard() {
             // Optimistic update or just call API
             try {
                 // Determine status logic if needed, but for moving we just patch basic info
-                await axios.patch(`http://localhost:3000/api/admin/reservations/${id}`, {
+                await axios.patch(`/api/admin/reservations/${id}`, {
                     table_id,
                     time_slot
                 });
@@ -85,10 +85,10 @@ export default function AdminDashboard() {
         setLoading(true);
         try {
             const [resReq, tablesReq, menuReq, settingsReq] = await Promise.all([
-                axios.get(`http://localhost:3000/api/admin/reservations?date=${selectedDate}`),
-                axios.get('http://localhost:3000/api/admin/tables'),
-                axios.get('http://localhost:3000/api/admin/menu'),
-                axios.get('http://localhost:3000/api/settings')
+                axios.get(`/api/admin/reservations?date=${selectedDate}`),
+                axios.get('/api/admin/tables'),
+                axios.get('/api/admin/menu'),
+                axios.get('/api/settings')
             ]);
             setReservations(resReq.data);
             setTables(tablesReq.data);
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
 
     const updateReservationStatus = async (id, status) => {
         try {
-            await axios.patch(`http://localhost:3000/api/admin/reservations/${id}`, { status });
+            await axios.patch(`/api/admin/reservations/${id}`, { status });
             fetchData();
             if (selectedReservation?.id === id) {
                 setSelectedReservation(prev => ({ ...prev, status }));
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
                 }
             };
 
-            await axios.post('http://localhost:3000/api/admin/settings', settingsToSave);
+            await axios.post('/api/admin/settings', settingsToSave);
             alert('Configuration saved successfully!');
             fetchData(); // Refresh data
         } catch (err) {
@@ -143,9 +143,9 @@ export default function AdminDashboard() {
         e.preventDefault();
         try {
             if (editingMenuId) {
-                await axios.patch(`http://localhost:3000/api/admin/menu/${editingMenuId}`, menuForm);
+                await axios.patch(`/api/admin/menu/${editingMenuId}`, menuForm);
             } else {
-                await axios.post('http://localhost:3000/api/admin/menu', menuForm);
+                await axios.post('/api/admin/menu', menuForm);
             }
             setMenuForm({ name: '', description: '', image_url: '', price: '', category: '' });
             setEditingMenuId(null);
@@ -161,7 +161,7 @@ export default function AdminDashboard() {
     const deleteMenuItem = async () => {
         if (!itemToDelete) return;
         try {
-            await axios.delete(`http://localhost:3000/api/admin/menu/${itemToDelete.id}`);
+            await axios.delete(`/api/admin/menu/${itemToDelete.id}`);
             setItemToDelete(null);
             fetchData();
         } catch (err) {
@@ -174,9 +174,9 @@ export default function AdminDashboard() {
         e.preventDefault();
         try {
             if (editingTableId) {
-                await axios.patch(`http://localhost:3000/api/admin/tables/${editingTableId}`, tableForm);
+                await axios.patch(`/api/admin/tables/${editingTableId}`, tableForm);
             } else {
-                await axios.post('http://localhost:3000/api/admin/tables', tableForm);
+                await axios.post('/api/admin/tables', tableForm);
             }
             setTableForm({ name: '', capacity: '', location: 'Indoor', status: 'Available' });
             setEditingTableId(null);
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
     const deleteTable = async () => {
         if (!tableToDelete) return;
         try {
-            await axios.delete(`http://localhost:3000/api/admin/tables/${tableToDelete.id}`);
+            await axios.delete(`/api/admin/tables/${tableToDelete.id}`);
             setTableToDelete(null);
             fetchData();
         } catch (err) {
@@ -204,9 +204,9 @@ export default function AdminDashboard() {
         e.preventDefault();
         try {
             if (editingReservationId) {
-                await axios.patch(`http://localhost:3000/api/admin/reservations/${editingReservationId}`, reservationForm);
+                await axios.patch(`/api/admin/reservations/${editingReservationId}`, reservationForm);
             } else {
-                await axios.post('http://localhost:3000/api/admin/reservations', reservationForm);
+                await axios.post('/api/admin/reservations', reservationForm);
             }
             setIsReservationModalOpen(false);
             setEditingReservationId(null);
@@ -220,7 +220,7 @@ export default function AdminDashboard() {
     const updateDepositStatus = async () => {
         if (!depositToUpdate) return;
         try {
-            await axios.patch(`http://localhost:3000/api/admin/reservations/deposit/${depositToUpdate.id}`, {
+            await axios.patch(`/api/admin/reservations/deposit/${depositToUpdate.id}`, {
                 deposit_paid: !depositToUpdate.deposit_paid
             });
             fetchData();
@@ -234,7 +234,7 @@ export default function AdminDashboard() {
     const deleteReservation = async () => {
         if (!reservationToDelete) return;
         try {
-            await axios.delete(`http://localhost:3000/api/admin/reservations/${reservationToDelete.id}`);
+            await axios.delete(`/api/admin/reservations/${reservationToDelete.id}`);
             setReservationToDelete(null);
             fetchData();
         } catch (err) {
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
 
         setUploading(true);
         try {
-            const res = await axios.post('http://localhost:3000/api/admin/upload', formData, {
+            const res = await axios.post('/api/admin/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setSiteSettings({ ...siteSettings, hero_image: res.url || res.data.url });
@@ -279,7 +279,7 @@ export default function AdminDashboard() {
 
         setUploadingLogo(true);
         try {
-            const res = await axios.post('http://localhost:3000/api/admin/upload', formData, {
+            const res = await axios.post('/api/admin/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setSiteSettings({ ...siteSettings, restaurant_logo: res.url || res.data.url });
@@ -301,7 +301,7 @@ export default function AdminDashboard() {
 
         setUploadingAboutImage(true);
         try {
-            const res = await axios.post('http://localhost:3000/api/admin/upload', formData, {
+            const res = await axios.post('/api/admin/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setSiteSettings({ ...siteSettings, about_image: res.url || res.data.url });
@@ -324,7 +324,7 @@ export default function AdminDashboard() {
 
         setUploadingMenuImage(true);
         try {
-            const res = await axios.post('http://localhost:3000/api/admin/upload', formData, {
+            const res = await axios.post('/api/admin/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             const imageUrl = res.data.url || res.url;
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
 
     const fetchReservationById = async (id) => {
         try {
-            const res = await axios.get(`http://localhost:3000/api/reservations/${id}`);
+            const res = await axios.get(`/api/reservations/${id}`);
             setSelectedReservation(res.data);
             setActiveTab('reservations');
         } catch (err) {

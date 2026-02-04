@@ -29,7 +29,7 @@ export default function BookingPage() {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await axios.get('http://localhost:3000/api/settings');
+                const res = await axios.get('/api/settings');
                 setSiteSettings(res.data);
             } catch (err) {
                 console.error('Failed to fetch settings', err);
@@ -43,7 +43,7 @@ export default function BookingPage() {
         const fetchSlots = async () => {
             setSlotsLoading(true);
             try {
-                const res = await axios.get('http://localhost:3000/api/availability', {
+                const res = await axios.get('/api/availability', {
                     params: {
                         date: formData.date,
                         guests: formData.guests,
@@ -84,7 +84,7 @@ export default function BookingPage() {
                 seating_preference: formData.preference
             };
 
-            const res = await axios.post('http://localhost:3000/api/reservations', payload);
+            const res = await axios.post('/api/reservations', payload);
             navigate('/confirmation', {
                 state: {
                     reservationId: res.data.id,

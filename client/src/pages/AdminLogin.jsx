@@ -13,7 +13,7 @@ export default function AdminLogin() {
         e.preventDefault();
         try {
             // In a real app we would store token in context/localStorage
-            const res = await axios.post('http://localhost:3000/api/auth/login', { username, password });
+            const res = await axios.post('/api/auth/login', { username, password });
             if (res.data.token) {
                 localStorage.setItem('adminToken', res.data.token);
                 localStorage.setItem('userRole', res.data.role); // Store role

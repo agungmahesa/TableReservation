@@ -43,8 +43,8 @@ export default function HomePage() {
         const fetchData = async () => {
             try {
                 const [settingsRes, menuRes] = await Promise.all([
-                    axios.get('http://localhost:3000/api/settings'),
-                    axios.get('http://localhost:3000/api/menu')
+                    axios.get('/api/settings'),
+                    axios.get('/api/menu')
                 ]);
                 setSettings({ ...settingsRes.data, activeMenuId: menuRes.data[0]?.id });
                 setMenu(menuRes.data);
