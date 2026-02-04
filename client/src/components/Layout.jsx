@@ -1,9 +1,24 @@
+import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { UtensilsCrossed } from 'lucide-react';
+import axios from 'axios';
 
 export default function Layout() {
     const location = useLocation();
     const isHome = location.pathname === '/';
+    const [settings, setSettings] = useState({});
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await axios.get('/api/settings');
+                setSettings(res.data);
+            } catch (err) {
+                console.error('Failed to fetch settings in Layout', err);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     return (
         <div className={`font-sans flex flex-col ${isHome ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
@@ -14,9 +29,13 @@ export default function Layout() {
                     : 'bg-secondary text-surface shadow-md relative'
                 }
             `}>
-                <Link to="/" className="flex items-center gap-2 text-2xl font-bold tracking-tight hover:text-primary transition-colors">
-                    <UtensilsCrossed className="w-8 h-8 text-primary" />
-                    <span>Lumina Dining</span>
+                <Link to="/" className="flex items-center gap-3 text-2xl font-bold tracking-tight hover:text-primary transition-colors">
+                    {settings.restaurant_logo ? (
+                        <img src={settings.restaurant_logo} alt="Logo" className="w-10 h-10 object-contain" />
+                    ) : (
+                        <UtensilsCrossed className="w-8 h-8 text-primary" />
+                    )}
+                    <span>{settings.restaurant_name || 'Lumina Dining'}</span>
                 </Link>
                 <nav className="flex gap-6 items-center">
                     <Link to="/" className="text-sm font-medium hover:text-primary transition-colors hidden md:block">HOME</Link>
@@ -32,7 +51,7 @@ export default function Layout() {
 
             {!isHome && (
                 <footer className="bg-secondary text-surface/60 py-8 text-center text-sm">
-                    <p>&copy; {new Date().getFullYear()} Lumina Dining. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} {settings.restaurant_name || 'Lumina Dining'}. All rights reserved.</p>
                     <div className="mt-2 flex justify-center gap-4">
                         <Link to="/admin" className="hover:text-primary">Staff Login</Link>
                     </div>
