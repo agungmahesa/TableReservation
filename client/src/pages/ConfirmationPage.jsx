@@ -20,7 +20,7 @@ export default function ConfirmationPage() {
             const url = canvas.toDataURL('image/png');
             const link = document.createElement('a');
             link.href = url;
-            link.download = `${(state.restaurantName || 'Lumina').replace(/\s+/g, '-')}-Reservation-${state.reservationId}.png`;
+            link.download = `${(state.restaurantName || 'Restaurant').replace(/\s+/g, '-')}-Reservation-${state.reservationId}.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -96,7 +96,7 @@ export default function ConfirmationPage() {
                         <div className="bg-white p-4 rounded-2xl shadow-sm">
                             <QRCodeCanvas
                                 id="qr-canvas"
-                                value={`${(state.restaurantName || 'LUMINA').toUpperCase().replace(/\s+/g, '-')}-${state.reservationId}`}
+                                value={`${(state.restaurantName || 'RESTAURANT').toUpperCase().replace(/\s+/g, '-')}-${state.reservationId}`}
                                 size={160}
                                 level="H"
                                 includeMargin={false}

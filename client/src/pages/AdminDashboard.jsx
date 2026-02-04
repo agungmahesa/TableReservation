@@ -429,11 +429,15 @@ export default function AdminDashboard() {
             )}
             {/* Sidebar */}
             <aside className="w-64 bg-secondary text-white p-6 hidden md:flex flex-col border-r border-white/5 shadow-2xl z-20">
-                <div className="flex items-center gap-3 mb-10 px-2">
-                    <div className="bg-primary p-2 rounded-lg text-secondary">
-                        <LayoutGrid size={24} />
-                    </div>
-                    <h1 className="text-xl font-black tracking-tight">Lumina Admin</h1>
+                <div className="flex items-center gap-3 mb-10 px-2 overflow-hidden">
+                    {siteSettings.restaurant_logo ? (
+                        <img src={siteSettings.restaurant_logo} alt="Logo" className="w-8 h-8 object-contain rounded-md" />
+                    ) : (
+                        <div className="bg-primary p-2 rounded-lg text-secondary">
+                            <LayoutGrid size={24} />
+                        </div>
+                    )}
+                    <h1 className="text-xl font-black tracking-tight truncate">{siteSettings.restaurant_name || 'Admin Panel'}</h1>
                 </div>
 
                 <nav className="flex-1 space-y-2">
@@ -648,6 +652,19 @@ export default function AdminDashboard() {
                                             </h3>
 
                                             <div className="space-y-8">
+                                                {/* Restaurant Name */}
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 block">Restaurant Name</label>
+                                                    <input
+                                                        type="text"
+                                                        value={siteSettings.restaurant_name || ''}
+                                                        onChange={e => setSiteSettings({ ...siteSettings, restaurant_name: e.target.value })}
+                                                        placeholder="Your Restaurant Name"
+                                                        className="w-full bg-gray-50 p-4 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-primary font-bold"
+                                                    />
+                                                    <p className="text-[10px] text-gray-400 mt-2 font-medium italic">This name will appear on the Landing Page, Admin Panel, and Booking confirmation.</p>
+                                                </div>
+
                                                 {/* Restaurant Logo */}
                                                 <div>
                                                     <label className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-2 block">Restaurant Logo</label>
