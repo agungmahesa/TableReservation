@@ -117,9 +117,29 @@ exports.deleteMenuItem = async (req, res) => {
 exports.initializeDatabase = async (req, res) => {
     try {
         await db.initializeDb();
-        res.json({ message: 'Database initialization triggered successfully' });
+        res.json({
+            message: 'Database initialization triggered successfully',
+            status: 'Success'
+        });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Database initialization failed: ' + error.message });
+        console.error('Initialization Route Error:', error);
+        res.status(500).json({
+            error: 'Database initialization failed',
+            details: error.message,
+            hint: 'Ensure DATABASE_URL is set in Vercel Environment Variables'
+        });
     }
+};
+
+exports.healthCheck = async (req, res) => {
+    res.json({
+        status: 'UP',
+        environment: {
+            hasDatabaseUrl: !!process.env.DATABASE_URL,
+            hasSupabaseUrl: !!process.env.SUPABASE_URL,
+            hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
+            nodeEnv: process.env.NODE_ENV,
+            isVercel: !!process.env.VERCEL
+        }
+    });
 };

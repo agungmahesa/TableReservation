@@ -2,11 +2,17 @@ const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 const path = require('path');
 
-// Initialize Supabase Client
-const supabase = createClient(
-    process.env.SUPABASE_URL || '',
-    process.env.SUPABASE_ANON_KEY || ''
-);
+// Initialize Supabase Client lazily to prevent startup crash if env vars are missing
+let supabase;
+const getSupabase = () => {
+    if (!supabase) {
+        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+            throw new Error('Missing SUPABASE_URL or SUPABASE_ANON_KEY environment variables');
+        }
+        supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+    }
+    return supabase;
+};
 
 // Use memory storage for Multer
 const storage = multer.memoryStorage();
@@ -40,7 +46,8 @@ exports.uploadImage = (req, res) => {
             const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
             const fileName = `menu-${uniqueSuffix}${path.extname(file.originalname)}`;
 
-            const { data, error } = await supabase.storage
+            const client = getSupabase();
+            const { data, error } = await client.storage
                 .from('menu-images')
                 .upload(fileName, file.buffer, {
                     contentType: file.mimetype,
@@ -53,7 +60,7 @@ exports.uploadImage = (req, res) => {
             }
 
             // Get Public URL
-            const { data: { publicUrl } } = supabase.storage
+            const { data: { publicUrl } } = client.storage
                 .from('menu-images')
                 .getPublicUrl(fileName);
 

@@ -13,6 +13,7 @@ router.post('/reservations', reservationController.createReservation);
 router.get('/reservations/:id', reservationController.getReservation);
 router.get('/settings', configController.getSettings);
 router.get('/menu', configController.getMenu);
+router.get('/health', configController.healthCheck);
 
 // Admin Routes (Simplified Auth for now)
 router.get('/admin/reservations', reservationController.getAllReservations);
