@@ -104,7 +104,7 @@ export default function BookingPage() {
     return (
         <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
             <div className="text-center mb-10">
-                <h1 className="text-4xl font-extrabold text-secondary mb-2">Book Your Table</h1>
+                <h1 className="text-4xl font-extrabold text-white mb-2">Book Your Table</h1>
                 <p className="text-gray-500">Secure your spot at {siteSettings.restaurant_name || 'our restaurant'} in just a few clicks.</p>
             </div>
 
@@ -191,22 +191,34 @@ export default function BookingPage() {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                                        {slots.map(slot => (
-                                            <button
-                                                key={slot.time}
-                                                disabled={!slot.available}
-                                                onClick={() => setFormData({ ...formData, time: slot.time })}
-                                                className={`p-4 rounded-xl text-lg font-bold transition-all border-2 flex flex-col items-center justify-center gap-1 ${formData.time === slot.time
-                                                    ? 'bg-primary border-primary text-secondary shadow-lg scale-105'
-                                                    : slot.available
-                                                        ? 'bg-white border-gray-100 hover:border-primary text-secondary'
-                                                        : 'bg-gray-50 border-gray-50 text-gray-300 cursor-not-allowed opacity-60'
-                                                    }`}
-                                            >
-                                                {slot.time}
-                                                {!slot.available && <span className="text-[10px] uppercase">Full</span>}
-                                            </button>
-                                        ))}
+                                        {slots.map(slot => {
+                                            const isToday = formData.date === format(new Date(), 'yyyy-MM-dd');
+                                            const [h, m] = slot.time.split(':').map(Number);
+                                            const now = new Date();
+                                            const isPast = isToday && (h < now.getHours() || (h === now.getHours() && m < now.getMinutes()));
+                                            const isAvailable = slot.available && !isPast;
+
+                                            return (
+                                                <button
+                                                    key={slot.time}
+                                                    disabled={!isAvailable}
+                                                    onClick={() => setFormData({ ...formData, time: slot.time })}
+                                                    className={`p-4 rounded-xl text-lg font-bold transition-all border-2 flex flex-col items-center justify-center gap-1 ${formData.time === slot.time
+                                                        ? 'bg-primary border-primary text-secondary shadow-lg scale-105'
+                                                        : isAvailable
+                                                            ? 'bg-white border-gray-100 hover:border-primary text-secondary'
+                                                            : 'bg-gray-50 border-gray-50 text-gray-300 cursor-not-allowed opacity-60'
+                                                        }`}
+                                                >
+                                                    {slot.time}
+                                                    {isPast ? (
+                                                        <span className="text-[10px] uppercase">Passed</span>
+                                                    ) : !slot.available && (
+                                                        <span className="text-[10px] uppercase">Full</span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 )}
                                 {slots.length === 0 && !slotsLoading && (
