@@ -10,8 +10,8 @@
             "destination": "/server/uploads/$1"
         },
         {
-            "source": "/(.*)",
-            "destination": "/client/$1"
+            "source": "/((?!api|uploads).*)",
+            "destination": "/client/index.html"
         }
     ],
     "builds": [
