@@ -142,6 +142,17 @@ exports.healthCheck = async (req, res) => {
         }
     }
 
+    let supabaseTest = 'not tested';
+    if (process.env.SUPABASE_URL) {
+        try {
+            const start = Date.now();
+            const response = await fetch(process.env.SUPABASE_URL);
+            supabaseTest = `Connect Success (${response.status}) in ${Date.now() - start}ms`;
+        } catch (e) {
+            supabaseTest = `Connect Failed: ${e.message}`;
+        }
+    }
+
     res.json({
         status: 'UP',
         environment: {
@@ -149,6 +160,7 @@ exports.healthCheck = async (req, res) => {
             databaseHost: dbHost,
             hasSupabaseUrl: !!process.env.SUPABASE_URL,
             supabaseUrl: process.env.SUPABASE_URL ? (process.env.SUPABASE_URL.substring(0, 15) + '...') : 'none',
+            supabaseConnectTest: supabaseTest,
             hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
             nodeEnv: process.env.NODE_ENV,
             isVercel: !!process.env.VERCEL
