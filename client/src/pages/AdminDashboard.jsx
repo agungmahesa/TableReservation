@@ -868,7 +868,7 @@ export default function AdminDashboard() {
 
                     {
                         activeTab === 'calendar' && (
-                            userRole === 'Staff' ? (
+                            (userRole === 'Staff' || isViewer) ? (
                                 <div className="flex-1 flex flex-col items-center justify-center p-12 bg-white rounded-[2.5rem] shadow-xl border border-white/20">
                                     <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
                                         <CalendarRange size={48} className="text-primary" />
