@@ -4,11 +4,15 @@ exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
         // For simplicity in this demo:
-        if (username === 'admin' && password === 'admin123') {
+        const lowerUsername = username.toLowerCase();
+        if (lowerUsername === 'admin' && password === 'Strugle1!@') {
             return res.json({ token: 'mock-token-123', role: 'Admin' });
         }
-        if (username === 'staff' && password === 'staff123') {
+        if (lowerUsername === 'staff' && password === 'Starline1!') {
             return res.json({ token: 'mock-token-staff-123', role: 'Staff' });
+        }
+        if (lowerUsername === 'viewer' && password === 'viewer') {
+            return res.json({ token: 'mock-token-viewer-123', role: 'Viewer' });
         }
 
         return res.status(401).json({ error: 'Invalid credentials' });

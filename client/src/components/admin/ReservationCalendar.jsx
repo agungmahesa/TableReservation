@@ -8,7 +8,7 @@ for (let i = 9; i <= 22; i++) {
     TIME_SLOTS.push(`${i.toString().padStart(2, '0')}:30`);
 }
 
-export default function ReservationCalendar({ tables, reservations, onUpdateReservation, onDateChange, selectedDate, onAddReservation }) {
+export default function ReservationCalendar({ tables, reservations, onUpdateReservation, onDateChange, selectedDate, onAddReservation, isViewer = false }) {
     const [viewMode, setViewMode] = useState('day'); // 'day' | 'month'
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -81,7 +81,7 @@ export default function ReservationCalendar({ tables, reservations, onUpdateRese
                         reservations={reservations}
                         date={selectedDate}
                         timeSlots={TIME_SLOTS}
-                        onAddReservation={onAddReservation}
+                        isViewer={isViewer}
                     />
                 ) : (
                     <div className="flex-1 flex items-center justify-center text-gray-300 font-bold uppercase tracking-widest">
@@ -93,7 +93,7 @@ export default function ReservationCalendar({ tables, reservations, onUpdateRese
     );
 }
 
-function DayTimeline({ tables, reservations, date, timeSlots, onAddReservation }) {
+function DayTimeline({ tables, reservations, date, timeSlots, onAddReservation, isViewer }) {
     const [activePopover, setActivePopover] = useState(null);
 
     const handleReservationClick = (e, reservation) => {
@@ -102,22 +102,29 @@ function DayTimeline({ tables, reservations, date, timeSlots, onAddReservation }
     };
 
     const handleQuickAdd = (tableId, timeSlot) => {
+        if (isViewer) return;
         if (onAddReservation) {
             onAddReservation(tableId, timeSlot);
         }
     };
 
     const handleDragStart = (e, reservation) => {
+        if (isViewer) {
+            e.preventDefault();
+            return;
+        }
         e.dataTransfer.setData('text/plain', JSON.stringify(reservation));
         e.dataTransfer.effectAllowed = 'move';
     };
 
     const handleDragOver = (e) => {
+        if (isViewer) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
     };
 
     const handleDrop = (e, tableId, timeSlot) => {
+        if (isViewer) return;
         e.preventDefault();
         const data = e.dataTransfer.getData('text/plain');
         if (!data) return;
@@ -202,12 +209,14 @@ function DayTimeline({ tables, reservations, date, timeSlots, onAddReservation }
                                     onDragOver={handleDragOver}
                                     onDrop={(e) => handleDrop(e, table.id, slot)}
                                     onClick={() => handleQuickAdd(table.id, slot)}
-                                    className="w-32 h-full absolute top-0 border-r border-transparent hover:bg-primary/5 transition-colors flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer z-10"
+                                    className={`w-32 h-full absolute top-0 border-r border-transparent hover:bg-primary/5 transition-colors flex items-center justify-center opacity-0 hover:opacity-100 z-10 ${isViewer ? 'cursor-default' : 'cursor-pointer'}`}
                                     style={{ left: `${i * 128}px` }}
                                 >
-                                    <button className="w-8 h-8 rounded-full bg-primary text-secondary flex items-center justify-center shadow-lg transform scale-0 group-hover/row:scale-100 transition-transform pointer-events-none">
-                                        <Plus size={16} />
-                                    </button>
+                                    {!isViewer && (
+                                        <button className="w-8 h-8 rounded-full bg-primary text-secondary flex items-center justify-center shadow-lg transform scale-0 group-hover/row:scale-100 transition-transform pointer-events-none">
+                                            <Plus size={16} />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -224,7 +233,7 @@ function DayTimeline({ tables, reservations, date, timeSlots, onAddReservation }
                                 reservation={res}
                                 style={style}
                                 onClick={handleReservationClick}
-                                onDragStart={handleDragStart}
+                                isViewer={isViewer}
                             />
                         );
                     })}
@@ -236,18 +245,19 @@ function DayTimeline({ tables, reservations, date, timeSlots, onAddReservation }
                 <QuickInfoPopover
                     reservation={activePopover.reservation}
                     onClose={() => setActivePopover(null)}
+                    isViewer={isViewer}
                 />
             )}
         </div>
     );
 }
 
-function ReservationBlock({ reservation, style, onClick, onDragStart }) {
+function ReservationBlock({ reservation, style, onClick, onDragStart, isViewer }) {
     const isPaid = reservation.deposit_paid;
 
     return (
         <div
-            draggable
+            draggable={!isViewer}
             onDragStart={(e) => onDragStart(e, reservation)}
             onClick={(e) => onClick(e, reservation)}
             className={`absolute h-20 top-2 mx-1 rounded-xl p-3 shadow-lg border-l-4 flex flex-col justify-between cursor-pointer hover:brightness-95 transition-all z-20
@@ -270,7 +280,7 @@ function ReservationBlock({ reservation, style, onClick, onDragStart }) {
     );
 }
 
-function QuickInfoPopover({ reservation, onClose }) {
+function QuickInfoPopover({ reservation, onClose, isViewer }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-secondary/20 backdrop-blur-sm" onClick={onClose}></div>
@@ -302,14 +312,16 @@ function QuickInfoPopover({ reservation, onClose }) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                    <button className="px-4 py-3 bg-green-500 text-white rounded-xl text-sm font-black hover:bg-green-600 transition-colors shadow-lg shadow-green-200">
-                        Mark Paid
-                    </button>
-                    <button className="px-4 py-3 bg-red-50 text-red-500 rounded-xl text-sm font-black hover:bg-red-100 transition-colors border border-red-100">
-                        Cancel
-                    </button>
-                </div>
+                {!isViewer && (
+                    <div className="grid grid-cols-2 gap-3">
+                        <button className="px-4 py-3 bg-green-500 text-white rounded-xl text-sm font-black hover:bg-green-600 transition-colors shadow-lg shadow-green-200">
+                            Mark Paid
+                        </button>
+                        <button className="px-4 py-3 bg-red-50 text-red-500 rounded-xl text-sm font-black hover:bg-red-100 transition-colors border border-red-100">
+                            Cancel
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

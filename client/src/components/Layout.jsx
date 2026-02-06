@@ -14,6 +14,15 @@ export default function Layout() {
             try {
                 const res = await axios.get('/api/settings');
                 setSettings(res.data);
+
+                // Update favicon dynamically
+                if (res.data.restaurant_logo) {
+                    const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+                    link.type = 'image/x-icon';
+                    link.rel = 'shortcut icon';
+                    link.href = res.data.restaurant_logo;
+                    document.getElementsByTagName('head')[0].appendChild(link);
+                }
             } catch (err) {
                 console.error('Failed to fetch settings in Layout', err);
             } finally {
@@ -36,7 +45,7 @@ export default function Layout() {
             `}>
                 <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
                     {settings.restaurant_logo ? (
-                        <img src={settings.restaurant_logo} alt="Logo" className="h-12 w-auto object-contain" />
+                        <img src={settings.restaurant_logo} alt="Logo" className="h-16 w-auto object-contain" />
                     ) : (
                         <div className="flex items-center gap-2">
                             <UtensilsCrossed className="w-8 h-8 text-primary" />

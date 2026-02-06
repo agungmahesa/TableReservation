@@ -12,6 +12,7 @@ import ReservationCalendar from '../components/admin/ReservationCalendar';
 export default function AdminDashboard() {
     const navigate = useNavigate();
     const [userRole, setUserRole] = useState(localStorage.getItem('userRole') || 'Staff');
+    const isViewer = userRole === 'Viewer';
     const [activeTab, setActiveTab] = useState('reservations');
     const [activeConfigTab, setActiveConfigTab] = useState('general');
     const [reservations, setReservations] = useState([]);
@@ -478,20 +479,22 @@ export default function AdminDashboard() {
                     <div className="flex items-center gap-4">
                         {activeTab === 'reservations' && (
                             <>
-                                <button
-                                    onClick={() => {
-                                        setEditingReservationId(null);
-                                        setReservationForm({
-                                            customer_name: '', customer_email: '', customer_phone: '',
-                                            date: selectedDate, time_slot: '18:00', guest_count: 2, special_requests: '',
-                                            status: 'Confirmed', table_id: tables[0]?.id || ''
-                                        });
-                                        setIsReservationModalOpen(true);
-                                    }}
-                                    className="px-4 py-2 bg-primary text-secondary rounded-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition-all shadow-lg shadow-primary/10"
-                                >
-                                    <Plus size={18} /> New
-                                </button>
+                                {!isViewer && (
+                                    <button
+                                        onClick={() => {
+                                            setEditingReservationId(null);
+                                            setReservationForm({
+                                                customer_name: '', customer_email: '', customer_phone: '',
+                                                date: selectedDate, time_slot: '18:00', guest_count: 2, special_requests: '',
+                                                status: 'Confirmed', table_id: tables[0]?.id || ''
+                                            });
+                                            setIsReservationModalOpen(true);
+                                        }}
+                                        className="px-4 py-2 bg-primary text-secondary rounded-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition-all shadow-lg shadow-primary/10"
+                                    >
+                                        <Plus size={18} /> New
+                                    </button>
+                                )}
                                 <input
                                     type="date"
                                     value={selectedDate}
@@ -555,8 +558,9 @@ export default function AdminDashboard() {
                                                         {res.deposit_required ? (
                                                             <div className="flex flex-col items-center gap-1">
                                                                 <button
+                                                                    disabled={isViewer}
                                                                     onClick={() => setDepositToUpdate(res)}
-                                                                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase transition-all cursor-pointer hover:scale-105 ${res.deposit_paid ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'}`}
+                                                                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase transition-all cursor-pointer hover:scale-105 ${res.deposit_paid ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'} ${isViewer ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
                                                                     {res.deposit_paid ? '✓ Paid' : 'Mark Paid'}
                                                                 </button>
@@ -576,32 +580,36 @@ export default function AdminDashboard() {
                                                         >
                                                             <Info size={14} />
                                                         </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                setEditingReservationId(res.id);
-                                                                setReservationForm(res);
-                                                                setIsReservationModalOpen(true);
-                                                            }}
-                                                            className="p-2.5 rounded-xl bg-gray-100 text-gray-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm"
-                                                            title="Edit"
-                                                        >
-                                                            <Edit2 size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setReservationToDelete(res)}
-                                                            className="p-2.5 rounded-xl bg-gray-100 text-gray-400 hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={14} />
-                                                        </button>
-                                                        {res.status === 'Pending Payment' && (
-                                                            <button
-                                                                onClick={() => updateReservationStatus(res.id, 'Confirmed')}
-                                                                className="p-2.5 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow-sm"
-                                                                title="Confirm Payment"
-                                                            >
-                                                                <CheckCircle size={14} />
-                                                            </button>
+                                                        {!isViewer && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingReservationId(res.id);
+                                                                        setReservationForm(res);
+                                                                        setIsReservationModalOpen(true);
+                                                                    }}
+                                                                    className="p-2.5 rounded-xl bg-gray-100 text-gray-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm"
+                                                                    title="Edit"
+                                                                >
+                                                                    <Edit2 size={14} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setReservationToDelete(res)}
+                                                                    className="p-2.5 rounded-xl bg-gray-100 text-gray-400 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                                                    title="Delete"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                                {res.status === 'Pending Payment' && (
+                                                                    <button
+                                                                        onClick={() => updateReservationStatus(res.id, 'Confirmed')}
+                                                                        className="p-2.5 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow-sm"
+                                                                        title="Confirm Payment"
+                                                                    >
+                                                                        <CheckCircle size={14} />
+                                                                    </button>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </td>
                                                 </tr>
@@ -674,15 +682,17 @@ export default function AdminDashboard() {
                                                         {siteSettings.restaurant_logo && (
                                                             <div className="relative group rounded-2xl overflow-hidden w-40 h-40 border border-gray-100 shadow-inner bg-gray-50 mx-auto md:mx-0">
                                                                 <img src={siteSettings.restaurant_logo} className="w-full h-full object-contain p-4" alt="Logo" />
-                                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                                    <button onClick={() => logoInputRef.current?.click()} className="bg-white text-secondary p-2 rounded-full font-bold text-xs"><Edit2 size={16} /></button>
-                                                                </div>
+                                                                {!isViewer && (
+                                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                        <button onClick={() => logoInputRef.current?.click()} className="bg-white text-secondary p-2 rounded-full font-bold text-xs"><Edit2 size={16} /></button>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
                                                         {!siteSettings.restaurant_logo && (
-                                                            <div onClick={() => logoInputRef.current?.click()} className="w-40 h-40 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors mx-auto md:mx-0">
-                                                                <Plus className="text-gray-400 mb-2" />
-                                                                <span className="text-[10px] font-bold text-gray-400">Upload Logo</span>
+                                                            <div onClick={() => !isViewer && logoInputRef.current?.click()} className={`w-40 h-40 rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center transition-colors mx-auto md:mx-0 ${!isViewer ? 'cursor-pointer hover:bg-gray-100' : ''}`}>
+                                                                {!isViewer && <Plus className="text-gray-400 mb-2" />}
+                                                                <span className="text-[10px] font-bold text-gray-400">{isViewer ? 'No Logo' : 'Upload Logo'}</span>
                                                             </div>
                                                         )}
                                                         <input type="file" ref={logoInputRef} onChange={handleLogoUpload} className="hidden" accept="image/*" />
@@ -734,7 +744,9 @@ export default function AdminDashboard() {
                                                     </div>
                                                 </div>
 
-                                                <button onClick={handleSaveSettings} className="w-full bg-secondary text-primary py-4 rounded-2xl font-black hover:bg-black transition-all shadow-xl">Update General Information</button>
+                                                {!isViewer && (
+                                                    <button onClick={handleSaveSettings} className="w-full bg-secondary text-primary py-4 rounded-2xl font-black hover:bg-black transition-all shadow-xl">Update General Information</button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -806,7 +818,9 @@ export default function AdminDashboard() {
                                                         </div>
                                                     </div>
 
-                                                    <button onClick={handleSaveSettings} className="w-full bg-secondary text-primary py-4 rounded-2xl font-black hover:bg-black transition-all shadow-xl">Update CMS Content</button>
+                                                    {!isViewer && (
+                                                        <button onClick={handleSaveSettings} className="w-full bg-secondary text-primary py-4 rounded-2xl font-black hover:bg-black transition-all shadow-xl">Update CMS Content</button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -818,9 +832,11 @@ export default function AdminDashboard() {
                                                     <h3 className="text-xl font-black flex items-center gap-3">
                                                         <LayoutGrid className="text-primary" /> Menu Management
                                                     </h3>
-                                                    <button onClick={() => { setEditingMenuId(null); setMenuForm({ name: '', description: '', image_url: '', price: '', category: '' }); setIsMenuModalOpen(true); }} className="px-6 py-2 bg-primary text-secondary rounded-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition-all shadow-lg shadow-primary/10">
-                                                        <Plus size={18} /> Add Item
-                                                    </button>
+                                                    {!isViewer && (
+                                                        <button onClick={() => { setEditingMenuId(null); setMenuForm({ name: '', description: '', image_url: '', price: '', category: '' }); setIsMenuModalOpen(true); }} className="px-6 py-2 bg-primary text-secondary rounded-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition-all shadow-lg shadow-primary/10">
+                                                            <Plus size={18} /> Add Item
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 <div className="grid md:grid-cols-2 gap-4">
                                                     {menu.map(item => (
@@ -830,8 +846,12 @@ export default function AdminDashboard() {
                                                                 <h4 className="font-bold truncate">{item.name}</h4>
                                                                 <p className="text-primary font-black text-sm">Rp {item.price.toLocaleString()}</p>
                                                                 <div className="flex gap-2 mt-2">
-                                                                    <button onClick={() => { setEditingMenuId(item.id); setMenuForm(item); setIsMenuModalOpen(true); }} className="p-1.5 bg-gray-100 rounded-lg text-gray-500 hover:bg-blue-500 hover:text-white"><Edit2 size={14} /></button>
-                                                                    <button onClick={() => setItemToDelete(item)} className="p-1.5 bg-gray-100 rounded-lg text-gray-500 hover:bg-red-500 hover:text-white"><Trash2 size={14} /></button>
+                                                                    {!isViewer && (
+                                                                        <>
+                                                                            <button onClick={() => { setEditingMenuId(item.id); setMenuForm(item); setIsMenuModalOpen(true); }} className="p-1.5 bg-gray-100 rounded-lg text-gray-500 hover:bg-blue-500 hover:text-white"><Edit2 size={14} /></button>
+                                                                            <button onClick={() => setItemToDelete(item)} className="p-1.5 bg-gray-100 rounded-lg text-gray-500 hover:bg-red-500 hover:text-white"><Trash2 size={14} /></button>
+                                                                        </>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -869,6 +889,7 @@ export default function AdminDashboard() {
                                     onDateChange={setSelectedDate}
                                     onUpdateReservation={fetchData}
                                     onAddReservation={handleCalendarQuickAdd}
+                                    isViewer={isViewer}
                                 />
                             )
                         )
@@ -881,16 +902,18 @@ export default function AdminDashboard() {
                                     <h3 className="text-xl font-black flex items-center gap-3">
                                         <Users className="text-primary" /> Manage Tables
                                     </h3>
-                                    <button
-                                        onClick={() => {
-                                            setEditingTableId(null);
-                                            setTableForm({ name: '', capacity: '', location: 'Indoor', type: 'Standard', status: 'Available' });
-                                            setIsTableModalOpen(true);
-                                        }}
-                                        className="px-6 py-2 bg-primary text-secondary rounded-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition-all shadow-lg shadow-primary/10"
-                                    >
-                                        <Plus size={18} /> Add New Table
-                                    </button>
+                                    {!isViewer && (
+                                        <button
+                                            onClick={() => {
+                                                setEditingTableId(null);
+                                                setTableForm({ name: '', capacity: '', location: 'Indoor', type: 'Standard', status: 'Available' });
+                                                setIsTableModalOpen(true);
+                                            }}
+                                            className="px-6 py-2 bg-primary text-secondary rounded-xl font-bold flex items-center gap-2 hover:bg-yellow-500 transition-all shadow-lg shadow-primary/10"
+                                        >
+                                            <Plus size={18} /> Add New Table
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Joinable Tables Section */}
@@ -905,28 +928,30 @@ export default function AdminDashboard() {
                                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                                         {tables.filter(t => t.is_joinable === 1).map(table => (
                                             <div key={table.id} className={`group relative aspect-square p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center justify-center text-center gap-2 ${table.status === 'Available' ? 'bg-white border-green-100 hover:border-green-500 text-secondary' : 'bg-gray-100 border-gray-200 text-gray-400 opacity-50'}`}>
-                                                <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setEditingTableId(table.id);
-                                                            setTableForm(table);
-                                                            setIsTableModalOpen(true);
-                                                        }}
-                                                        className="p-1.5 bg-white shadow-sm rounded-lg text-gray-400 hover:text-blue-500"
-                                                    >
-                                                        <Edit2 size={12} />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setTableToDelete(table);
-                                                        }}
-                                                        className="p-1.5 bg-white shadow-sm rounded-lg text-gray-400 hover:text-red-500"
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
-                                                </div>
+                                                {!isViewer && (
+                                                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingTableId(table.id);
+                                                                setTableForm(table);
+                                                                setIsTableModalOpen(true);
+                                                            }}
+                                                            className="p-1.5 bg-white shadow-sm rounded-lg text-gray-400 hover:text-blue-500"
+                                                        >
+                                                            <Edit2 size={12} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setTableToDelete(table);
+                                                            }}
+                                                            className="p-1.5 bg-white shadow-sm rounded-lg text-gray-400 hover:text-red-500"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                                 <Users size={24} className={table.status === 'Available' ? 'text-green-500' : 'text-gray-400'} />
                                                 <div>
                                                     <h4 className="font-black text-xs uppercase tracking-tighter">{table.name}</h4>
@@ -955,28 +980,30 @@ export default function AdminDashboard() {
                                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                                         {tables.filter(t => t.is_joinable === 0).map(table => (
                                             <div key={table.id} className={`group relative aspect-square p-6 rounded-[2rem] border-2 transition-all flex flex-col items-center justify-center text-center gap-2 ${table.status === 'Available' ? 'bg-white border-amber-100 hover:border-amber-500 text-secondary' : 'bg-gray-100 border-gray-200 text-gray-400 opacity-50'}`}>
-                                                <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setEditingTableId(table.id);
-                                                            setTableForm(table);
-                                                            setIsTableModalOpen(true);
-                                                        }}
-                                                        className="p-1.5 bg-white shadow-sm rounded-lg text-gray-400 hover:text-blue-500"
-                                                    >
-                                                        <Edit2 size={12} />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setTableToDelete(table);
-                                                        }}
-                                                        className="p-1.5 bg-white shadow-sm rounded-lg text-gray-400 hover:text-red-500"
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
-                                                </div>
+                                                {!isViewer && (
+                                                    <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingTableId(table.id);
+                                                                setTableForm(table);
+                                                                setIsTableModalOpen(true);
+                                                            }}
+                                                            className="p-1.5 bg-white shadow-sm rounded-lg text-gray-400 hover:text-blue-500"
+                                                        >
+                                                            <Edit2 size={12} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setTableToDelete(table);
+                                                            }}
+                                                            className="p-1.5 bg-white shadow-sm rounded-lg text-gray-400 hover:text-red-500"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                )}
                                                 <Users size={24} className={table.status === 'Available' ? 'text-amber-500' : 'text-gray-400'} />
                                                 <div>
                                                     <h4 className="font-black text-xs uppercase tracking-tighter">{table.name}</h4>
@@ -1060,7 +1087,7 @@ export default function AdminDashboard() {
                                         >
                                             Close Detail
                                         </button>
-                                        {selectedReservation.status !== 'Completed' && (
+                                        {!isViewer && selectedReservation.status !== 'Completed' && (
                                             <button
                                                 onClick={() => { updateReservationStatus(selectedReservation.id, 'Completed'); setSelectedReservation(null); }}
                                                 className="flex-1 bg-primary text-secondary py-5 rounded-[2rem] font-black hover:bg-yellow-500 transition-all shadow-xl shadow-primary/20"
@@ -1157,7 +1184,7 @@ export default function AdminDashboard() {
                                         ></textarea>
                                     </div>
                                     <div className="col-span-2 pt-4">
-                                        <button type="submit" className="w-full bg-primary text-secondary py-5 rounded-[2rem] font-black hover:bg-yellow-500 transition-all shadow-xl shadow-primary/20">
+                                        <button type="submit" disabled={isViewer} className={`w-full bg-primary text-secondary py-5 rounded-[2rem] font-black hover:bg-yellow-500 transition-all shadow-xl shadow-primary/20 ${isViewer ? "opacity-50 cursor-not-allowed" : ""}`}>
                                             {editingMenuId ? 'Save Changes' : 'Create Menu Item'}
                                         </button>
                                     </div>
@@ -1188,7 +1215,7 @@ export default function AdminDashboard() {
                                             Cancel
                                         </button>
                                         <button
-                                            onClick={deleteMenuItem}
+                                            disabled={isViewer} onClick={deleteMenuItem}
                                             className="flex-1 px-6 py-4 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-200"
                                         >
                                             Delete
@@ -1283,7 +1310,7 @@ export default function AdminDashboard() {
                                         </label>
                                     </div>
                                     <div className="pt-4">
-                                        <button type="submit" className="w-full bg-primary text-secondary py-5 rounded-[2rem] font-black hover:bg-yellow-500 transition-all shadow-xl shadow-primary/20">
+                                        <button type="submit" disabled={isViewer} className={`w-full bg-primary text-secondary py-5 rounded-[2rem] font-black hover:bg-yellow-500 transition-all shadow-xl shadow-primary/20 ${isViewer ? "opacity-50 cursor-not-allowed" : ""}`}>
                                             {editingTableId ? 'Save Changes' : 'Create Table'}
                                         </button>
                                     </div>
@@ -1314,7 +1341,7 @@ export default function AdminDashboard() {
                                             Cancel
                                         </button>
                                         <button
-                                            onClick={deleteTable}
+                                            disabled={isViewer} onClick={deleteTable}
                                             className="flex-1 px-6 py-4 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-200"
                                         >
                                             Delete
@@ -1428,7 +1455,7 @@ export default function AdminDashboard() {
                                         ></textarea>
                                     </div>
                                     <div className="col-span-2 pt-4">
-                                        <button type="submit" className="w-full bg-primary text-secondary py-5 rounded-[2rem] font-black hover:bg-yellow-500 transition-all shadow-xl shadow-primary/20">
+                                        <button type="submit" disabled={isViewer} className={`w-full bg-primary text-secondary py-5 rounded-[2rem] font-black hover:bg-yellow-500 transition-all shadow-xl shadow-primary/20 ${isViewer ? "opacity-50 cursor-not-allowed" : ""}`}>
                                             {editingReservationId ? 'Save Changes' : 'Create Reservation'}
                                         </button>
                                     </div>
@@ -1459,7 +1486,7 @@ export default function AdminDashboard() {
                                             Cancel
                                         </button>
                                         <button
-                                            onClick={deleteReservation}
+                                            disabled={isViewer} onClick={deleteReservation}
                                             className="flex-1 px-6 py-4 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-200"
                                         >
                                             Delete
