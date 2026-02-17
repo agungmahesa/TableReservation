@@ -70,8 +70,10 @@ export default function Layout() {
             {!isHome && (
                 <footer className="bg-secondary text-surface/60 py-8 text-center text-sm">
                     <p>&copy; {new Date().getFullYear()} Mstudio. All rights reserved.</p>
-                    <div className="mt-2 flex justify-center gap-4">
-                        <Link to="/admin" className="hover:text-primary">Staff Login</Link>
+                    <div className="mt-2 flex flex-col md:flex-row justify-center items-center gap-2 md:gap-4">
+                        <Link to="/admin" className="hover:text-primary order-2 md:order-1">Staff Login</Link>
+                        <span className="hidden md:inline text-white/10 order-2">|</span>
+                        <a href="mailto:agungmahesay@gmail.com" className="hover:text-primary transition-colors order-1 md:order-3">Contact Developer: agungmahesay@gmail.com</a>
                     </div>
                 </footer>
             )}

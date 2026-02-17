@@ -208,8 +208,14 @@ export default function HomePage() {
                         </a>
                     </div>
 
-                    <div className="pt-16 border-t border-white/5 text-gray-500 text-xs tracking-widest uppercase">
-                        &copy; {new Date().getFullYear()} Mstudio. All rights reserved.
+                    <div className="pt-16 border-t border-white/5 space-y-4">
+                        <div className="text-gray-400 text-sm font-light">
+                            Interested in a professional website like this? <br className="md:hidden" />
+                            <a href="mailto:agungmahesay@gmail.com" className="text-primary hover:underline font-bold ml-1">Contact: agungmahesay@gmail.com</a>
+                        </div>
+                        <div className="text-gray-500 text-[10px] tracking-widest uppercase">
+                            &copy; {new Date().getFullYear()} Mstudio. All rights reserved.
+                        </div>
                     </div>
                 </div>
             </footer>
